@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+PyPDF2
+sentence-transformers
+faiss-cpu
+requests
+python-multipart
+pytesseract
+Pillow
