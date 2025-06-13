@@ -33,14 +33,16 @@ def get_most_similar_docs(query, texts, top_k=3):
     return [texts[i] for i in top_indices]
 
 # 🤖 Ask Gemini (Free API Compatible)
-
 def ask_gemini(prompt):
     try:
-        generation_config = {
-            "api_version": "v1"  # ✅ FORCE v1 to avoid v1beta
-        }
-        model = genai.GenerativeModel("models/gemini-pro", generation_config=generation_config)
-        response = model.generate_content(prompt)
+        model = genai.GenerativeModel("models/gemini-pro")
+        response = model.generate_content(
+            prompt,
+            generation_config={
+                "temperature": 0.7,
+                "max_output_tokens": 512
+            }
+        )
         return response.text.strip()
     except Exception as e:
         return f"❌ Gemini API Error: {e}"
