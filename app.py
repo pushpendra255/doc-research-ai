@@ -12,7 +12,7 @@ import google.generativeai as genai
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
 # ========== Setup ==========
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
 doc_index = faiss.IndexFlatL2(384)
 doc_texts = []
 doc_ids = []
