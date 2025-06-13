@@ -50,9 +50,13 @@ st.title("📘 EduMentor – Policy Research Chatbot (Gemini-Powered)")
 
 uploaded_files = st.file_uploader("📄 Upload PDFs", type="pdf", accept_multiple_files=True)
 
-# Show upload status
-if uploaded_files is not None and len(uploaded_files) > 0:
-    st.success(f"✅ {len(uploaded_files)} PDF(s) uploaded successfully.")
+# Check upload status
+if uploaded_files:
+    if any([f is not None and hasattr(f, 'read') for f in uploaded_files]):
+        st.success(f"✅ {len(uploaded_files)} PDF(s) uploaded successfully.")
+    else:
+        st.error("❌ File upload failed. Please try again or switch browser.")
+        st.stop()
 else:
     st.info("📂 Please upload at least one PDF to begin.")
 
