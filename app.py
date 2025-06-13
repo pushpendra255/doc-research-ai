@@ -14,7 +14,7 @@ import pandas as pd
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
 # 🔎 Load Sentence Embedding Model
-model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
+model = SentenceTransformer("all-MiniLM-L6-v2")  # Let it auto-select CPU
 
 # 📄 Text Extraction from PDF
 def extract_text(file):
