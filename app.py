@@ -1,5 +1,5 @@
-# ✅ EduMentor: Streamlit-only PDF Chatbot with Gemini API
-# Ready for Wasserstoff Gen-AI Internship Task
+# ✅ EduMentor: Streamlit-only PDF Chatbot with Gemini API (Free Version Fixed)
+# Final version for Wasserstoff Gen-AI Internship Task
 
 import streamlit as st
 from PyPDF2 import PdfReader
@@ -10,7 +10,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import google.generativeai as genai
 import pandas as pd
 
-# 🔐 Gemini API Key Configuration
+# 🔐 Gemini API Key Configuration (Free API Key)
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
 # 🔎 Load Sentence Embedding Model
@@ -25,7 +25,6 @@ def extract_text(file):
         return ""
 
 # 🧠 Semantic Search
-
 def get_most_similar_docs(query, texts, top_k=3):
     query_vec = model.encode([query])
     text_vecs = model.encode(texts)
@@ -33,17 +32,16 @@ def get_most_similar_docs(query, texts, top_k=3):
     top_indices = np.argsort(sims)[::-1][:top_k]
     return [texts[i] for i in top_indices]
 
-# 🤖 Ask Gemini
-
+# 🤖 Ask Gemini (Free API Compatible)
 def ask_gemini(prompt):
     try:
-        response = genai.GenerativeModel("gemini-pro").generate_content(prompt)
+        model = genai.GenerativeModel("models/gemini-pro")  # ✅ Corrected model name
+        response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"❌ Gemini API Error: {e}"
 
 # 📍 Get Citation
-
 def get_citation(text, query):
     lines = text.split("\n")
     for i, line in enumerate(lines):
@@ -52,7 +50,6 @@ def get_citation(text, query):
     return "Not Found"
 
 # 🧠 Streamlit App UI
-
 st.set_page_config(page_title="EduMentor – Gemini Chatbot", layout="wide")
 st.title("📘 EduMentor – Theme-Based PDF Chatbot (Gemini AI)")
 
