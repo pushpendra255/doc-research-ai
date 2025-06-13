@@ -1,3 +1,6 @@
+# ✅ EduMentor: Streamlit-only PDF Chatbot with Gemini API
+# Ready for Wasserstoff Gen-AI Internship Task
+
 import streamlit as st
 from PyPDF2 import PdfReader
 import re
@@ -5,14 +8,15 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import google.generativeai as genai
+import pandas as pd
 
-# ========== Configure Gemini ==========
+# 🔐 Gemini API Key Configuration
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
-# ========== Load Embedding Model ==========
+# 🔎 Load Sentence Embedding Model
 model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
 
-# ========== Extract Text ==========
+# 📄 Text Extraction from PDF
 def extract_text(file):
     try:
         reader = PdfReader(file)
@@ -20,7 +24,8 @@ def extract_text(file):
     except:
         return ""
 
-# ========== Similarity ==========
+# 🧠 Semantic Search
+
 def get_most_similar_docs(query, texts, top_k=3):
     query_vec = model.encode([query])
     text_vecs = model.encode(texts)
@@ -28,7 +33,8 @@ def get_most_similar_docs(query, texts, top_k=3):
     top_indices = np.argsort(sims)[::-1][:top_k]
     return [texts[i] for i in top_indices]
 
-# ========== Ask Gemini ==========
+# 🤖 Ask Gemini
+
 def ask_gemini(prompt):
     try:
         response = genai.GenerativeModel("gemini-pro").generate_content(prompt)
@@ -36,7 +42,8 @@ def ask_gemini(prompt):
     except Exception as e:
         return f"❌ Gemini API Error: {e}"
 
-# ========== Citation ==========
+# 📍 Get Citation
+
 def get_citation(text, query):
     lines = text.split("\n")
     for i, line in enumerate(lines):
@@ -44,33 +51,32 @@ def get_citation(text, query):
             return f"Page {i//25 + 1}, Line {i%25 + 1}"
     return "Not Found"
 
-# ========== Streamlit UI ==========
+# 🧠 Streamlit App UI
+
 st.set_page_config(page_title="EduMentor – Gemini Chatbot", layout="wide")
-st.title("📘 EduMentor – Policy Research Chatbot (Gemini-Powered)")
+st.title("📘 EduMentor – Theme-Based PDF Chatbot (Gemini AI)")
 
-uploaded_files = st.file_uploader("📄 Upload PDFs", type="pdf", accept_multiple_files=True)
+uploaded_files = st.file_uploader("📄 Upload one or more PDF files", type="pdf", accept_multiple_files=True)
 
-# Check upload status
 if uploaded_files:
     if any([f is not None and hasattr(f, 'read') for f in uploaded_files]):
         st.success(f"✅ {len(uploaded_files)} PDF(s) uploaded successfully.")
     else:
-        st.error("❌ File upload failed. Please try again or switch browser.")
+        st.error("❌ File upload failed. Try another browser or file.")
         st.stop()
 else:
-    st.info("📂 Please upload at least one PDF to begin.")
+    st.info("📂 Please upload at least one PDF to continue.")
 
-query = st.text_input("🔍 Ask your question:", placeholder="Example: What is the National Education Policy?")
+query = st.text_input("🔍 Ask a question:", placeholder="Example: What are the key goals of the NEP?")
 submit = st.button("✍️ Get Answer")
 
 if submit and query:
-    if uploaded_files is None or len(uploaded_files) == 0:
-        st.warning("⚠️ Please upload at least one PDF to continue.")
+    if not uploaded_files:
+        st.warning("⚠️ Upload at least one PDF first.")
         st.stop()
 
-    with st.spinner("🔎 Analyzing uploaded documents..."):
-        doc_texts = []
-        doc_info = []
+    with st.spinner("🔎 Processing documents..."):
+        doc_texts, doc_info = [], []
 
         for i, file in enumerate(uploaded_files):
             doc_id = f"DOC{i+1:03d}"
@@ -98,6 +104,7 @@ if submit and query:
 
         if matched_docs_display:
             joined = "\n".join(matched_docs_display)
+
             final_answer = ask_gemini(
                 f"Answer the following question from the document snippets:\n\n{joined}\n\nQ: {query}"
             )
@@ -113,7 +120,6 @@ if submit and query:
         st.success(final_answer)
 
         if table_data:
-            import pandas as pd
             st.markdown("### 📊 Matching Document Results")
             st.dataframe(pd.DataFrame(table_data), use_container_width=True)
 
