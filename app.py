@@ -2,22 +2,19 @@ import streamlit as st
 import os
 import tempfile
 from PyPDF2 import PdfReader
-import requests
 import re
+import numpy as np
 from sentence_transformers import SentenceTransformer
-import faiss
+from sklearn.metrics.pairwise import cosine_similarity
 import google.generativeai as genai
 
 # ========== Configure Gemini ==========
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
-# ========== Setup ==========
+# ========== Load Embedding Model ==========
 model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
-doc_index = faiss.IndexFlatL2(384)
-doc_texts = []
-doc_ids = []
 
-# ========== PDF Extraction ==========
+# ========== Extract Text from PDF ==========
 def extract_text(file):
     try:
         reader = PdfReader(file)
@@ -25,18 +22,21 @@ def extract_text(file):
     except:
         return ""
 
-# ========== Vector Storage ==========
-def store_document(text, doc_id):
-    doc_ids.append(doc_id)
-    doc_texts.append(text)
-    vec = model.encode([text])
-    doc_index.add(vec)
+# ========== Compute Similarity ==========
+def get_most_similar_docs(query, texts, top_k=3):
+    query_vec = model.encode([query])
+    text_vecs = model.encode(texts)
+    sims = cosine_similarity(query_vec, text_vecs)[0]
+    top_indices = np.argsort(sims)[::-1][:top_k]
+    return [texts[i] for i in top_indices]
 
-# ========== Search ==========
-def search_documents(query):
-    q_vec = model.encode([query])
-    D, I = doc_index.search(q_vec, k=3)
-    return [doc_texts[i] for i in I[0] if i < len(doc_texts)]
+# ========== Ask Gemini ==========
+def ask_gemini(prompt):
+    try:
+        response = genai.GenerativeModel("gemini-pro").generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"❌ Gemini API Error: {e}"
 
 # ========== Citation ==========
 def get_citation(text, query):
@@ -46,16 +46,7 @@ def get_citation(text, query):
             return f"Page {i//25 + 1}, Line {i%25 + 1}"
     return "Not Found"
 
-# ========== Ask Gemini ==========
-def ask_gemini(prompt):
-    model = genai.GenerativeModel("gemini-pro")
-    try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"❌ Gemini API error: {e}"
-
-# ========== Streamlit UI ==========
+# ========== Streamlit App ==========
 st.set_page_config(page_title="EduMentor – Gemini Chatbot", layout="wide")
 st.title("📘 EduMentor – Policy Research Chatbot (Gemini-Powered)")
 
@@ -64,52 +55,55 @@ query = st.text_input("🔍 Ask your question:", placeholder="Example: What is t
 submit = st.button("✍️ Get Answer")
 
 if submit and query:
-    with st.spinner("Analyzing documents..."):
-        matched_docs = []
-        answer_table = []
+    with st.spinner("Processing documents..."):
+        doc_texts = []
+        doc_info = []
 
-        if uploaded_files:
-            for i, file in enumerate(uploaded_files):
-                doc_id = f"DOC{i+1:03d}"
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                    tmp.write(file.read())
-                    tmp_path = tmp.name
-                text = extract_text(tmp_path)
-                store_document(text, doc_id)
+        for i, file in enumerate(uploaded_files):
+            doc_id = f"DOC{i+1:03d}"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(file.read())
+                tmp_path = tmp.name
+            text = extract_text(tmp_path)
+            doc_texts.append(text)
+            doc_info.append((doc_id, text, file.name))
 
-                if query.lower() in text.lower():
-                    citation = get_citation(text, query)
-                    snippet = re.findall(rf"(.{{0,100}}{re.escape(query)}.{{0,200}})", text, flags=re.IGNORECASE)
-                    answer_text = snippet[0].strip() if snippet else "Relevant info found."
-                    answer_table.append({
-                        "Document ID": doc_id,
-                        "Extracted Answer": answer_text,
-                        "Citation": citation,
-                        "Source File": file.name
-                    })
-                    matched_docs.append(f"{doc_id}: {answer_text}")
+        matched_texts = get_most_similar_docs(query, doc_texts)
 
-        if matched_docs:
-            joined_answers = "\n".join(matched_docs)
-            prompt = f"Answer the following based on document text:\n\n{joined_answers}\n\nQ: {query}"
-            final_answer = ask_gemini(prompt)
+        matched_docs_display = []
+        table_data = []
 
-            theme_prompt = (
-                f"Identify themes from the document snippets below.\n"
-                f"Use this format:\nTheme 1 – Description: Documents (DOC001, DOC002)\n\n{joined_answers}"
-            )
+        for doc_id, text, name in doc_info:
+            if text in matched_texts:
+                citation = get_citation(text, query)
+                snippet = re.findall(rf"(.{{0,100}}{re.escape(query)}.{{0,200}})", text, flags=re.IGNORECASE)
+                answer_text = snippet[0].strip() if snippet else "Relevant info found."
+                matched_docs_display.append(f"{doc_id}: {answer_text}")
+                table_data.append({
+                    "Document ID": doc_id,
+                    "Extracted Answer": answer_text,
+                    "Citation": citation,
+                    "Source File": name
+                })
+
+        if matched_docs_display:
+            joined = "\n".join(matched_docs_display)
+            prompt = f"Answer the following question from the document snippets:\n\n{joined}\n\nQ: {query}"
+            answer = ask_gemini(prompt)
+
+            theme_prompt = f"Identify clear themes from the following snippets. Format: Theme 1 – Description: Documents (DOC001, DOC002)\n\n{joined}"
             themes = ask_gemini(theme_prompt)
         else:
-            final_answer = ask_gemini(query)
+            answer = ask_gemini(query)
             themes = "No theme found."
 
         st.markdown("### ✅ Answer")
-        st.success(final_answer)
+        st.success(answer)
 
-        if matched_docs:
+        if table_data:
             import pandas as pd
             st.markdown("### 📊 Matching Document Results")
-            st.dataframe(pd.DataFrame(answer_table), use_container_width=True)
+            st.dataframe(pd.DataFrame(table_data), use_container_width=True)
 
         st.markdown("### 🧠 Theme Summary")
         st.info(themes)
