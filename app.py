@@ -50,8 +50,8 @@ st.title("📘 EduMentor – Policy Research Chatbot (Gemini-Powered)")
 
 uploaded_files = st.file_uploader("📄 Upload PDFs", type="pdf", accept_multiple_files=True)
 
-# Feedback message
-if uploaded_files:
+# Show upload status
+if uploaded_files is not None and len(uploaded_files) > 0:
     st.success(f"✅ {len(uploaded_files)} PDF(s) uploaded successfully.")
 else:
     st.info("📂 Please upload at least one PDF to begin.")
@@ -60,8 +60,8 @@ query = st.text_input("🔍 Ask your question:", placeholder="Example: What is t
 submit = st.button("✍️ Get Answer")
 
 if submit and query:
-    if not uploaded_files:
-        st.warning("⚠️ You must upload at least one PDF to get an answer.")
+    if uploaded_files is None or len(uploaded_files) == 0:
+        st.warning("⚠️ Please upload at least one PDF to continue.")
         st.stop()
 
     with st.spinner("🔎 Analyzing uploaded documents..."):
