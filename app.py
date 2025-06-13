@@ -1,5 +1,5 @@
-# ✅ EduMentor: Streamlit-only PDF Chatbot with Gemini API (Free Version Fixed)
-# Final version for Wasserstoff Gen-AI Internship Task
+# ✅ EduMentor: Streamlit-only PDF Chatbot using Groq (LLaMA 3)
+# Final version with Groq API instead of Gemini
 
 import streamlit as st
 from PyPDF2 import PdfReader
@@ -7,16 +7,20 @@ import re
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-import google.generativeai as genai
 import pandas as pd
-import torch  # ✅ Added for device control
+import requests
+import json
 
-# 🔐 Gemini API Key Configuration (Free API Key)
-genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
+# 🔐 GROQ API Configuration
+groq_api_key = "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"
+groq_url = "https://api.groq.com/openai/v1/chat/completions"
+headers = {
+    "Authorization": f"Bearer {groq_api_key}",
+    "Content-Type": "application/json"
+}
 
 # 🔎 Load Sentence Embedding Model
-# ✅ Safely handle device (avoid NotImplementedError in PyTorch)
-model = SentenceTransformer("all-MiniLM-L6-v2")  # This works perfectly
+model = SentenceTransformer("all-MiniLM-L6-v2")  # ✅ Auto CPU safe
 
 # 📄 Text Extraction from PDF
 def extract_text(file):
@@ -34,20 +38,23 @@ def get_most_similar_docs(query, texts, top_k=3):
     top_indices = np.argsort(sims)[::-1][:top_k]
     return [texts[i] for i in top_indices]
 
-# 🤖 Ask Gemini (Free API Compatible)
-def ask_gemini(prompt):
+# 🤖 Ask Groq (LLaMA 3)
+def ask_groq(prompt):
+    data = {
+        "model": "llama3-70b-8192",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 512
+    }
     try:
-        model = genai.GenerativeModel("models/gemini-pro")
-        response = model.generate_content(
-            prompt,
-            generation_config={
-                "temperature": 0.7,
-                "max_output_tokens": 512
-            }
-        )
-        return response.text.strip()
+        res = requests.post(groq_url, headers=headers, data=json.dumps(data))
+        res.raise_for_status()
+        return res.json()["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        return f"❌ Gemini API Error: {e}"
+        return f"❌ Groq API Error: {e}"
 
 # 📍 Get Citation
 def get_citation(text, query):
@@ -58,8 +65,8 @@ def get_citation(text, query):
     return "Not Found"
 
 # 🧠 Streamlit App UI
-st.set_page_config(page_title="EduMentor – Gemini Chatbot", layout="wide")
-st.title("📘 EduMentor – Theme-Based PDF Chatbot (Gemini AI)")
+st.set_page_config(page_title="EduMentor – Groq Chatbot", layout="wide")
+st.title("📘 EduMentor – Theme-Based PDF Chatbot (Groq LLaMA-3)")
 
 uploaded_files = st.file_uploader("📄 Upload one or more PDF files", type="pdf", accept_multiple_files=True)
 
@@ -110,15 +117,15 @@ if submit and query:
         if matched_docs_display:
             joined = "\n".join(matched_docs_display)
 
-            final_answer = ask_gemini(
-                f"Answer the following question from the document snippets:\n\n{joined}\n\nQ: {query}"
+            final_answer = ask_groq(
+                f"Answer this question using the document snippets below. Give a complete, short answer.\n\n{joined}\n\nQ: {query}"
             )
 
-            theme_summary = ask_gemini(
+            theme_summary = ask_groq(
                 f"Identify themes from these document snippets. Format:\nTheme 1 – Description: Documents (DOC001, DOC002)\n\n{joined}"
             )
         else:
-            final_answer = ask_gemini(query)
+            final_answer = ask_groq(query)
             theme_summary = "No theme found."
 
         st.markdown("### ✅ Answer")
