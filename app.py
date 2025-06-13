@@ -11,7 +11,7 @@ import google.generativeai as genai
 # ========== Configure Gemini ==========
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
-# ========== Load Embedding Model ==========
+# ========== Load Embedding Model (CPU) ==========
 model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
 
 # ========== Extract Text from PDF ==========
@@ -50,11 +50,24 @@ def get_citation(text, query):
 st.set_page_config(page_title="EduMentor – Gemini Chatbot", layout="wide")
 st.title("📘 EduMentor – Policy Research Chatbot (Gemini-Powered)")
 
+# Upload PDFs
 uploaded_files = st.file_uploader("📄 Upload PDFs", type="pdf", accept_multiple_files=True)
+
+# Show upload success
+if uploaded_files:
+    st.success(f"✅ {len(uploaded_files)} PDF(s) uploaded successfully.")
+else:
+    st.info("📂 Please upload at least one PDF to begin.")
+
+# Ask question
 query = st.text_input("🔍 Ask your question:", placeholder="Example: What is the National Education Policy?")
 submit = st.button("✍️ Get Answer")
 
 if submit and query:
+    if not uploaded_files:
+        st.warning("⚠️ You must upload at least one PDF to get an answer.")
+        st.stop()
+
     with st.spinner("Processing documents..."):
         doc_texts = []
         doc_info = []
