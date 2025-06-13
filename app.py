@@ -16,9 +16,7 @@ genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
 # 🔎 Load Sentence Embedding Model
 # ✅ Safely handle device (avoid NotImplementedError in PyTorch)
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = SentenceTransformer("all-MiniLM-L6-v2")
-model.to(device)  # Force CPU fallback
+model = SentenceTransformer("all-MiniLM-L6-v2")  # This works perfectly
 
 # 📄 Text Extraction from PDF
 def extract_text(file):
