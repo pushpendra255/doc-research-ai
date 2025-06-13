@@ -1,9 +1,5 @@
-fastapi
-uvicorn
+streamlit
 PyPDF2
 sentence-transformers
 faiss-cpu
-requests
-python-multipart
-pytesseract
-Pillow
+google-generativeai
