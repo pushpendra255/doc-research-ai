@@ -35,11 +35,13 @@ def get_most_similar_docs(query, texts, top_k=3):
 # 🤖 Ask Gemini (Free API Compatible)
 def ask_gemini(prompt):
     try:
-        model = genai.GenerativeModel("models/gemini-pro")
+        model = genai.GenerativeModel("models/gemini-pro")  # Only works after >=0.5.2
         response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         return f"❌ Gemini API Error: {e}"
+
+
 
 # 📍 Get Citation
 def get_citation(text, query):
