@@ -9,12 +9,16 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import google.generativeai as genai
 import pandas as pd
+import torch  # ✅ Added for device control
 
 # 🔐 Gemini API Key Configuration (Free API Key)
 genai.configure(api_key="AIzaSyBeoYwJuJSaOGyWbNwzgoGl8rb2OtctSN8")
 
 # 🔎 Load Sentence Embedding Model
-model = SentenceTransformer("all-MiniLM-L6-v2")  # Let it auto-select CPU
+# ✅ Safely handle device (avoid NotImplementedError in PyTorch)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = SentenceTransformer("all-MiniLM-L6-v2")
+model.to(device)  # Force CPU fallback
 
 # 📄 Text Extraction from PDF
 def extract_text(file):
