@@ -52,7 +52,7 @@ You can get one from: https://console.groq.com
 
 ## ✅ Live Demo
 
-👉 [Click to View Live App]([https://your-username-doc-research-theme-idtif-chatbot.streamlit.app](https://doc-research-theme-idtif-chatbot.streamlit.app/))
+👉 [Click to View Live App]([https://your-username-doc-research-theme-idtif-chatbot.streamlit.app](https://doc-research-theme-idtif-chatbot.streamlit.app/])
 
 ## 📌 Assignment Requirement Mapping
 
