@@ -1,6 +1,10 @@
 # ✅ EduMentor v2: Per-Document QA + Clustering-Based Theme Detection using Groq API
 
-import streamlit as st from PyPDF2 import PdfReader import re import numpy as np from sentence_transformers import SentenceTransformer from sklearn.metrics.pairwise import cosine_similarity from sklearn.cluster import KMeans import pandas as pd import requests import json
+import streamlit as st
+from PyPDF2 import PdfReader
+import re
+import numpy as np
+from sentence_transformers import SentenceTransformer sklearn.metrics.pairwise import cosine_similarity from sklearn.cluster import KMeans import pandas as pd import requests import json
 
 🔐 GROQ API Configuration
 
