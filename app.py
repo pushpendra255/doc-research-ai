@@ -11,7 +11,7 @@ import pandas as pd
 import requests
 import json
 
-# Groq API Configuration
+# 🔐 Groq API Configuration
 groq_api_key = "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"
 groq_url = "https://api.groq.com/openai/v1/chat/completions"
 headers = {
@@ -19,10 +19,10 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Load Sentence Embedding Model
+# 🔎 Load Sentence Embedding Model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Text Extraction from PDF
+# 📄 Text Extraction from PDF
 def extract_text(file):
     try:
         reader = PdfReader(file)
@@ -30,7 +30,7 @@ def extract_text(file):
     except:
         return ""
 
-# Ask Groq (LLaMA 3)
+# 🤖 Ask Groq (LLaMA 3)
 def ask_groq(prompt):
     data = {
         "model": "llama3-70b-8192",
@@ -48,7 +48,7 @@ def ask_groq(prompt):
     except Exception as e:
         return f"❌ Groq API Error: {e}"
 
-# Get Citation
+# 📍 Get Citation
 def get_citation(text, query):
     lines = text.split("\n")
     for i, line in enumerate(lines):
@@ -56,7 +56,7 @@ def get_citation(text, query):
             return f"Page {i//25 + 1}, Line {i%25 + 1}"
     return "Not Found"
 
-# Cluster documents by themes
+# 🧠 Cluster documents by themes
 def cluster_documents(texts, n_clusters=3):
     embeddings = model.encode(texts)
     kmeans = KMeans(n_clusters=min(n_clusters, len(texts)), random_state=42)
@@ -66,30 +66,26 @@ def cluster_documents(texts, n_clusters=3):
         clusters.setdefault(label, []).append((f"DOC{i+1:03d}", texts[i]))
     return clusters
 
-# Streamlit App UI
+# 🧠 Streamlit App UI
 st.set_page_config(page_title="EduMentor – Groq Chatbot", layout="wide")
-st.title("EduMentor – Theme-Based PDF Chatbot (Groq LLaMA-3)")
+st.title("📘 EduMentor – Theme-Based PDF Chatbot (Groq LLaMA-3)")
 
-uploaded_files = st.file_uploader("Upload one or more PDF files", type="pdf", accept_multiple_files=True)
+# ✅ PDF Upload Section (fixed)
+uploaded_files = st.file_uploader("📄 Upload one or more PDF files", type="pdf", accept_multiple_files=True)
 
-if uploaded_files:
-    if any([f is not None and hasattr(f, 'read') for f in uploaded_files]):
-        st.success(f"{len(uploaded_files)} PDF(s) uploaded successfully.")
-    else:
-        st.error("File upload failed. Try another browser or file.")
-        st.stop()
+if not uploaded_files:
+    st.info("📂 Please upload at least one PDF to continue.")
+    st.stop()
 else:
-    st.info("Please upload at least one PDF to continue.")
+    st.success(f"✅ {len(uploaded_files)} PDF(s) uploaded successfully.")
 
-query = st.text_input("Ask a question:", placeholder="Example: What are the key goals of the NEP?")
-submit = st.button("Get Answer")
+# 🔍 Query Input
+query = st.text_input("🔍 Ask a question:", placeholder="Example: What are the key goals of the NEP?")
+submit = st.button("✍️ Get Answer")
 
+# ✅ On Submit
 if submit and query:
-    if not uploaded_files:
-        st.warning("Upload at least one PDF first.")
-        st.stop()
-
-    with st.spinner("Processing documents..."):
+    with st.spinner("🔎 Processing documents..."):
         doc_texts, doc_info = [], []
 
         for i, file in enumerate(uploaded_files):
@@ -133,12 +129,15 @@ if submit and query:
             final_answer = ask_groq(query)
             theme_summary = "No theme found."
 
+        # ✅ Answer Section
         st.markdown("### ✅ Answer")
         st.success(final_answer)
 
+        # 📊 Table of Results
         if table_data:
             st.markdown("### 📊 Matching Document Results")
             st.dataframe(pd.DataFrame(table_data), use_container_width=True)
 
+        # 🧠 Theme Summary
         st.markdown("### 🧠 Theme Summary")
         st.info(theme_summary)
