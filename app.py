@@ -11,7 +11,7 @@ import pandas as pd
 import requests
 import json
 
-🔐 GROQ API Configuration
+# 🔐 GROQ API Configuration
 
 groq_api_key = "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" groq_url = "https://api.groq.com/openai/v1/chat/completions" headers = { "Authorization": f"Bearer {groq_api_key}", "Content-Type": "application/json" }
 
