@@ -12,7 +12,7 @@ import requests
 import json
 
 # 🔐 Groq API Configuration
-groq_api_key = "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"
+groq_api_key = "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"
 groq_url = "https://api.groq.com/openai/v1/chat/completions"
 headers = {
     "Authorization": f"Bearer {groq_api_key}",
